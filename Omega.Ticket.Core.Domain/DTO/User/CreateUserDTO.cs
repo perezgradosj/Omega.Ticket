@@ -21,6 +21,6 @@ namespace Omega.Ticket.Core.Domain.DTO.User
         public string Phone { get; set; }
         public string Photo { get; set; }
         [Required]
-        public int ProfileId { get; set; }
+        public int? ProfileId { get; set; }
     }
 }
