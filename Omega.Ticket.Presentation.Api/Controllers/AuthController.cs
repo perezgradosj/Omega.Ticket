@@ -32,16 +32,19 @@ namespace Omega.Ticket.Presentation.Api.Controllers
         [HttpPost]
         public async Task<ActionResult<TokenDTO>> Login(LoginDTO loginDTO)
         {
+            //1. Buscamos el usuario
             User objUser = await _userService.FindByEmailOrPhone(loginDTO.User);
 
             if (objUser == null)
                 return NotFound();
             else
             {
+                //2. Comparamos las claves
                 byte[] passwordEncrypt = Cryptographic.HashPasswordWidthSalt(Encoding.UTF8.GetBytes(loginDTO.Password), objUser.Salt);
 
                 if (passwordEncrypt.SequenceEqual(objUser.Password))
                 {
+                    //3. Creamos el token
                     TokenDTO objToken = _authService.GetToken(objUser);
                     return Ok(objToken);
                 }                    
@@ -53,13 +56,17 @@ namespace Omega.Ticket.Presentation.Api.Controllers
         [HttpPost]
         public async Task<ActionResult<TokenDTO>> Register(CreateUserDTO createUserDTO)
         {
+            //1. Mapeamos 
             User objUser = _mapper.Map<User>(createUserDTO);
 
+            //2. Encriptamos la clave
             objUser.Salt = Cryptographic.GenerateSalt();
             objUser.Password = Cryptographic.HashPasswordWidthSalt(Encoding.UTF8.GetBytes(createUserDTO.PasswordDecrypted), objUser.Salt);
 
+            //3. Creamos el usuario
             objUser = await _userService.Create(objUser);
 
+            //4. Creamos el token
             TokenDTO objToken = _authService.GetToken(objUser);
 
             return Ok(objToken);
