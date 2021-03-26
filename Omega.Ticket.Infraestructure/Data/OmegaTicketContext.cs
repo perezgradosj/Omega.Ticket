@@ -40,9 +40,9 @@ namespace Omega.Ticket.Infraestructure.Data
         public virtual DbSet<Core.Domain.Entities.Type> Types { get; set; }
         public virtual DbSet<User> Users { get; set; }
 
-        public async System.Threading.Tasks.Task SaveChangesAsync()
+        public async System.Threading.Tasks.Task<int> SaveChangesAsync()
         {
-            await base.SaveChangesAsync();
+            return await base.SaveChangesAsync();
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

@@ -2,6 +2,7 @@
 using Omega.Ticket.Core.Domain.Interfaces;
 using Omega.Ticket.Core.Domain.Interfaces.Services;
 using System;
+using System.Threading.Tasks;
 
 namespace Omega.Ticket.Core.Application
 {
@@ -16,6 +17,11 @@ namespace Omega.Ticket.Core.Application
         {
             _context.Profiles.Add(obj);
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<Profile> FindById(int id)
+        {
+            return await _context.Profiles.FindAsync(id);
         }
     }
 }

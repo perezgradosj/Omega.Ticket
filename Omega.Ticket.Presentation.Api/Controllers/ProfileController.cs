@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Omega.Ticket.Core.Domain.DTO.Profile;
@@ -11,8 +12,9 @@ using System.Threading.Tasks;
 
 namespace Omega.Ticket.Presentation.Api.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/[controller]/[action]")]
     [ApiController]
+    [Authorize]
     public class ProfileController : ControllerBase
     {
         private readonly IProfileService _profileService;

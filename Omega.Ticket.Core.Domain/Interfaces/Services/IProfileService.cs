@@ -9,5 +9,7 @@ namespace Omega.Ticket.Core.Domain.Interfaces.Services
     public interface IProfileService
     {
         System.Threading.Tasks.Task Create(Profile obj);
+
+        Task<Profile> FindById(int id);
     }
 }
