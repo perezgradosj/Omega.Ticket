@@ -13,7 +13,7 @@ namespace Omega.Ticket.Infraestructure.Data.Configuration
         {
             entity.ToTable("User", "Seg");
 
-            entity.HasIndex(e => e.Id, "UQ_Email")
+            entity.HasIndex(e => e.Email, "UQ_Email")
                 .IsUnique();
 
             entity.Property(e => e.Email)
