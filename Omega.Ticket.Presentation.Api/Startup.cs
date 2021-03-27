@@ -58,9 +58,21 @@ namespace Omega.Ticket.Presentation.Api
             var appsSettingsSection = Configuration.GetSection("AppSettings");
             services.Configure<AppSettings>(appsSettingsSection);
             AppSettings appSettings = appsSettingsSection.Get<AppSettings>();
-
+            
             //Token configure
             var key = Encoding.ASCII.GetBytes(appSettings.SecretKey);
+
+            var tokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(key),
+                ValidateIssuer = false,
+                ValidateAudience = false,
+                ValidateLifetime = true,
+                RequireExpirationTime = false
+            };
+
+            services.AddSingleton(tokenValidationParameters);
 
             services.AddAuthentication(x =>
             {
@@ -70,14 +82,9 @@ namespace Omega.Ticket.Presentation.Api
             {
                 x.RequireHttpsMetadata = false;
                 x.SaveToken = true;
-                x.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(key),
-                    ValidateIssuer = false,
-                    ValidateAudience = false
-                };
+                x.TokenValidationParameters = tokenValidationParameters;
             });
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
