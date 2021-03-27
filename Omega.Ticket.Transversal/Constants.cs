@@ -10,5 +10,10 @@ namespace Omega.Ticket.Transversal
         {
             public const int Activo = 1;
         }
+
+        public static class Profile
+        {
+            public const int Cliente = 1;
+        }
     }
 }
