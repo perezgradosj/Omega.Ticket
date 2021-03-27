@@ -16,6 +16,9 @@ namespace Omega.Ticket.Infraestructure.Data.Configuration
             entity.HasIndex(e => e.Email, "UQ_Email")
                 .IsUnique();
 
+            entity.HasIndex(e => e.Phone, "UQ_Phone")
+                .IsUnique();
+
             entity.Property(e => e.Email)
                 .IsRequired()
                 .HasMaxLength(200)
@@ -31,7 +34,7 @@ namespace Omega.Ticket.Infraestructure.Data.Configuration
                 .HasMaxLength(40)
                 .IsUnicode(false);
 
-            entity.Property(e => e.Password).IsRequired();
+            entity.Property(e => e.Password).IsRequired();            
 
             entity.Property(e => e.Phone)
                 .IsRequired()
