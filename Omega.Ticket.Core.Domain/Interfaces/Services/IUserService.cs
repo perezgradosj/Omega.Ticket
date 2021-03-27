@@ -9,7 +9,7 @@ namespace Omega.Ticket.Core.Domain.Interfaces.Services
 {
     public interface IUserService
     {
-        Task<User> FindByEmailOrPhone(string user);
-        System.Threading.Tasks.Task<User> Create(User objUser);        
+        Task<User> FindByEmailOrPhone(string email, string phone);        
+        Task<User> FindById(int id);        
     }
 }

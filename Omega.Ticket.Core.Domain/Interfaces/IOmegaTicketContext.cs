@@ -28,6 +28,7 @@ namespace Omega.Ticket.Core.Domain.Interfaces
         DbSet<TicketUser> TicketUsers { get; set; }
         DbSet<Core.Domain.Entities.Type> Types { get; set; }
         DbSet<User> Users { get; set; }
+        DbSet<RefreshToken> RefreshToken { get; set; }
 
         System.Threading.Tasks.Task<int> SaveChangesAsync();
     }

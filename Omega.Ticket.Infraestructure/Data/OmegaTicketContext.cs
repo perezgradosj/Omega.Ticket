@@ -39,6 +39,7 @@ namespace Omega.Ticket.Infraestructure.Data
         public virtual DbSet<TicketUser> TicketUsers { get; set; }
         public virtual DbSet<Core.Domain.Entities.Type> Types { get; set; }
         public virtual DbSet<User> Users { get; set; }
+        public virtual DbSet<RefreshToken> RefreshToken { get; set; }
 
         public async System.Threading.Tasks.Task<int> SaveChangesAsync()
         {

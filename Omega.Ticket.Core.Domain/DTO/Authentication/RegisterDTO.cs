@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
 
-namespace Omega.Ticket.Core.Domain.DTO.User
+namespace Omega.Ticket.Core.Domain.DTO.Authentication
 {
-    public class CreateUserDTO
+    public class RegisterDTO
     {
         [Required]
         public string FirstName { get; set; }
@@ -14,13 +14,10 @@ namespace Omega.Ticket.Core.Domain.DTO.User
         [Required]
         [RegularExpression("^[a-z0-9_\\+-]+(\\.[a-z0-9_\\+-]+)*@[a-z0-9-]+(\\.[a-z0-9]+)*\\.([a-z]{2,4})$", ErrorMessage = "Invalid email format.")]
         public string Email { get; set; }
-        [Required]        
+        [Required]
         public string Password { get; set; }
         [Required]
         [RegularExpression(@"^(?!0+$)(\+\d{1,3}[- ]?)?(?!0+$)\d{7,15}$", ErrorMessage = "Please enter valid phone no.")]
         public string Phone { get; set; }
-        public string Photo { get; set; }
-        [Required]
-        public int? ProfileId { get; set; }
     }
 }

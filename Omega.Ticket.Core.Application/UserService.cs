@@ -16,17 +16,14 @@ namespace Omega.Ticket.Core.Application
             _context = context;
         }
 
-        public async System.Threading.Tasks.Task<User> Create(User objUser)
+        public async Task<User> FindByEmailOrPhone(string email, string phone)
         {
-            objUser.StateId = Constants.State.Activo; 
-            _context.Users.Add(objUser);
-            await _context.SaveChangesAsync();
-            return objUser;
+            return await _context.Users.FirstOrDefaultAsync(x => x.Email == email || x.Phone == phone);
         }
 
-        public async Task<User> FindByEmailOrPhone(string user)
+        public async Task<User> FindById(int id)
         {
-            return await _context.Users.Where(x => x.Email == user || x.Phone == user).FirstOrDefaultAsync();
+            return await _context.Users.FindAsync(id);
         }
     }
 }

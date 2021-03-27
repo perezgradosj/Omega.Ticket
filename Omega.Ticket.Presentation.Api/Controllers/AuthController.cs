@@ -10,6 +10,7 @@ using Omega.Ticket.Transversal;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -32,44 +33,43 @@ namespace Omega.Ticket.Presentation.Api.Controllers
         [HttpPost]
         public async Task<ActionResult<TokenDTO>> Login(LoginDTO loginDTO)
         {
-            //1. Buscamos el usuario
-            User objUser = await _userService.FindByEmailOrPhone(loginDTO.User);
+            User objUser = await _authService.Login(loginDTO.Username, loginDTO.Password);
 
             if (objUser == null)
-                return NotFound();
+                return Unauthorized();
             else
-            {
-                //2. Comparamos las claves
-                byte[] passwordEncrypt = Cryptographic.HashPasswordWidthSalt(Encoding.UTF8.GetBytes(loginDTO.Password), objUser.Salt);
-
-                if (passwordEncrypt.SequenceEqual(objUser.Password))
-                {
-                    //3. Creamos el token
-                    TokenDTO objToken = _authService.GetToken(objUser);
-                    return Ok(objToken);
-                }                    
-
-                return Forbid();
-            }
+                return await _authService.GetToken(objUser);
         }
 
         [HttpPost]
-        public async Task<ActionResult<TokenDTO>> Register(CreateUserDTO createUserDTO)
+        public async Task<ActionResult<TokenDTO>> Register(RegisterDTO registerDTO)
         {
-            //1. Mapeamos 
-            User objUser = _mapper.Map<User>(createUserDTO);
+            User objUser = await _userService.FindByEmailOrPhone(registerDTO.Email, registerDTO.Phone);
 
-            //2. Encriptamos la clave
-            objUser.Salt = Cryptographic.GenerateSalt();
-            objUser.Password = Cryptographic.HashPasswordWidthSalt(Encoding.UTF8.GetBytes(createUserDTO.PasswordDecrypted), objUser.Salt);
+            if (objUser != null)
+                return Conflict(new { Message = "El email o teléfono ya se encuentran registrados" });
+            else
+            {
+                objUser = await _authService.Register(registerDTO);
 
-            //3. Creamos el usuario
-            objUser = await _userService.Create(objUser);
+                if(objUser.Id == 0)
+                    return StatusCode(StatusCodes.Status500InternalServerError, new { Message = "No se pudo insertar el usuario" });
+                else
+                    return await _authService.GetToken(objUser);
+            }
+        }
 
-            //4. Creamos el token
-            TokenDTO objToken = _authService.GetToken(objUser);
+        public async Task<ActionResult<TokenDTO>> RefreshToken(TokenDTO tokenDTO)
+        {
+            string response = await _authService.VerifyToken(tokenDTO);
 
-            return Ok(objToken);
+            if (response != null)
+                return BadRequest(new { Message = response });
+            else
+            {
+                User objUser = await _userService.FindById(int.Parse(ClaimTypes.NameIdentifier));
+                return await _authService.GetToken(objUser);
+            }
         }
     }
 }
