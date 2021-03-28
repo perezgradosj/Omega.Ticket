@@ -47,6 +47,7 @@ namespace Omega.Ticket.Presentation.Api
             services.AddTransient<IProfileService, ProfileService>();
             services.AddTransient<IUserService, UserService>();
             services.AddTransient<IAuthService, AuthService>();
+            services.AddTransient<IRefreshTokenService, RefreshTokenService>();
 
             //DbContext
             services.AddTransient<IOmegaTicketContext, OmegaTicketContext>();
@@ -69,7 +70,8 @@ namespace Omega.Ticket.Presentation.Api
                 ValidateIssuer = false,
                 ValidateAudience = false,
                 ValidateLifetime = true,
-                RequireExpirationTime = false
+                RequireExpirationTime = false,
+                ClockSkew = TimeSpan.Zero
             };
 
             services.AddSingleton(tokenValidationParameters);

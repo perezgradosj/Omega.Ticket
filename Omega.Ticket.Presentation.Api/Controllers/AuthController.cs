@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -22,12 +23,14 @@ namespace Omega.Ticket.Presentation.Api.Controllers
     {
         private readonly IUserService _userService;
         private readonly IAuthService _authService;
+        private readonly IRefreshTokenService _refreshTokenService;
         private readonly IMapper _mapper;
-        public AuthController(IUserService userService, IAuthService authService, IMapper mapper)
+        public AuthController(IUserService userService, IAuthService authService, IRefreshTokenService refreshTokenService, IMapper mapper)
         {
             _userService = userService;
             _authService = authService;
             _mapper = mapper;
+            _refreshTokenService = refreshTokenService;
         }
 
         [HttpPost]
@@ -59,16 +62,38 @@ namespace Omega.Ticket.Presentation.Api.Controllers
             }
         }
 
+        [HttpPost]
         public async Task<ActionResult<TokenDTO>> RefreshToken(TokenDTO tokenDTO)
-        {
-            string response = await _authService.VerifyToken(tokenDTO);
+        {      
+            VerifyTokenDTO objVerifyToken = await _authService.VerifyToken(tokenDTO);
 
-            if (response != null)
-                return BadRequest(new { Message = response });
+            if (objVerifyToken.Error)
+                return BadRequest(new { Message = objVerifyToken.Message });
             else
             {
-                User objUser = await _userService.FindById(int.Parse(ClaimTypes.NameIdentifier));
+                User objUser = await _userService.FindById(objVerifyToken.UserId);
+                
                 return await _authService.GetToken(objUser);
+            }
+        }
+
+        [HttpDelete, Authorize]
+        public async Task<ActionResult> RevokeToken()
+        {
+            string userId = ((ClaimsIdentity)User.Identity).FindFirst(ClaimTypes.NameIdentifier).Value;
+
+            RefreshToken objRefreshToken = await _refreshTokenService.FindByUserId(int.Parse(userId));
+
+            if (objRefreshToken == null)
+                return BadRequest(new { Message = "Invalid token" });
+            else
+            {
+                int delete = await _refreshTokenService.Delete(objRefreshToken);
+
+                if (delete == 0)
+                    return StatusCode(StatusCodes.Status500InternalServerError, new { Message = "No se pudo eliminar el token" });
+                else
+                    return Ok();
             }
         }
     }

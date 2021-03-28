@@ -33,7 +33,7 @@ namespace Omega.Ticket.Presentation.Api.Controllers
                 TemperatureC = rng.Next(-20, 55),
                 Summary = Summaries[rng.Next(Summaries.Length)]
             })
-            .ToArray();
+            .ToArray();            
         }
     }
 }

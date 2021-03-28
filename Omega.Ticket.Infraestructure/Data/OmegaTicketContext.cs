@@ -69,6 +69,7 @@ namespace Omega.Ticket.Infraestructure.Data
             modelBuilder.ApplyConfiguration(new TicketUserConfiguration());
             modelBuilder.ApplyConfiguration(new TypeConfiguration());
             modelBuilder.ApplyConfiguration(new UserConfiguration());
+            modelBuilder.ApplyConfiguration(new RefreshTokenConfiguration());
 
             OnModelCreatingPartial(modelBuilder);
         }

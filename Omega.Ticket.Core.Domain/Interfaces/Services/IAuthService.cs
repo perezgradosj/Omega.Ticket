@@ -13,7 +13,7 @@ namespace Omega.Ticket.Core.Domain.Interfaces.Services
     {
         Task<User> Login(string username, string password);
         Task<User> Register(RegisterDTO registerDTO);
-        Task<string> VerifyToken(TokenDTO tokenDTO);
+        Task<VerifyTokenDTO> VerifyToken(TokenDTO tokenDTO);
         Task<TokenDTO> GetToken(User objUser);
     }
 }

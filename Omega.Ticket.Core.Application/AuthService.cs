@@ -30,14 +30,6 @@ namespace Omega.Ticket.Core.Application
             _tokenValidationParameters = tokenValidationParameters;
         }
 
-        private DateTime UnixTimeStampToDateTime(double unixTimeStamp)
-        {
-            // Unix timestamp is seconds past epoch
-            System.DateTime dtDateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc);
-            dtDateTime = dtDateTime.AddSeconds(unixTimeStamp).ToLocalTime();
-            return dtDateTime;
-        }
-
         private string GenerateAccessToken(ClaimsIdentity claims)
         {
             var key = Encoding.ASCII.GetBytes(_appSettings.SecretKey);
@@ -45,7 +37,7 @@ namespace Omega.Ticket.Core.Application
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = claims,
-                Expires = DateTime.UtcNow.AddHours(4),
+                Expires = DateTime.UtcNow.AddMinutes(1),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
 
@@ -71,7 +63,7 @@ namespace Omega.Ticket.Core.Application
                     objRefreshToken = new RefreshToken
                     {
                         Token = refreshToken,
-                        Expires = DateTime.UtcNow.AddDays(7),
+                        Expires = DateTime.Now.AddDays(7),
                         UserId = objUser.Id
                     };
                     await _context.RefreshToken.AddAsync(objRefreshToken);
@@ -79,7 +71,7 @@ namespace Omega.Ticket.Core.Application
                 else
                 {
                     objRefreshToken.Token = refreshToken;
-                    objRefreshToken.Expires = DateTime.UtcNow.AddDays(7);
+                    objRefreshToken.Expires = DateTime.Now.AddDays(7);
                 }                
                 await _context.SaveChangesAsync();
 
@@ -137,58 +129,82 @@ namespace Omega.Ticket.Core.Application
             return objUser;
         }
 
-        private string ValidateAccessToken(string accessToken)
+        private VerifyTokenDTO VerifyAccessToken(string accessToken)
         {
             var jwtTokenHandler = new JwtSecurityTokenHandler();
-
-            var principal = jwtTokenHandler.ValidateToken(accessToken, _tokenValidationParameters, out SecurityToken validatedAccessToken);
+            jwtTokenHandler.ValidateToken(accessToken, _tokenValidationParameters, out SecurityToken validatedAccessToken);
 
             if (validatedAccessToken is JwtSecurityToken jwtSecurityToken)
             {
                 var result = jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase);
 
                 if (result == false)
-                    return "Invalid token";
+                {
+                    return new VerifyTokenDTO
+                    {
+                        Error = true,
+                        Message = "Invalid token"
+                    };
+                }
             }
-
-            long utcExpiryDate = long.Parse(principal.Claims.FirstOrDefault(x => x.Type == JwtRegisteredClaimNames.Exp).Value);
-
-            DateTime expDate = UnixTimeStampToDateTime(utcExpiryDate);
-
-            if (expDate > DateTime.UtcNow)
-                return "We cannot refresh this since the token has not expired";
-
-            return null;
+            return new VerifyTokenDTO
+            {
+                Error = true,
+                Message = "We cannot refresh this since the token has not expired"
+            };
         }
 
-        private async Task<string> ValidateRefreshToken(string refreshToken)
+        private async Task<VerifyTokenDTO> VerifyRefreshToken(TokenDTO tokenDTO)
         {
-            RefreshToken objRefreshToken = await _context.RefreshToken.FirstOrDefaultAsync(x => x.Token == refreshToken);
+            RefreshToken objRefreshToken = await _context.RefreshToken.FirstOrDefaultAsync(x => x.Token == tokenDTO.RefreshToken);
 
             if (objRefreshToken == null)
-                return "refresh token doesnt exist";
+            {
+                return new VerifyTokenDTO
+                {
+                    Error = true,
+                    Message = "refresh token doesnt exist"
+                };
+            }
 
-            if (!objRefreshToken.IsActive)
-                return "token is not active";
+            if (DateTime.Now >= objRefreshToken.Expires)
+            {
+                return new VerifyTokenDTO
+                {
+                    Error = true,
+                    Message = "token has expired, user needs to relogin"
+                };
+            }
 
-            int userId = _context.Users.FirstOrDefault(x => x.Id == int.Parse(ClaimTypes.NameIdentifier)).Id;
+            var jwtTokenHandler = new JwtSecurityTokenHandler();
+            JwtSecurityToken tokenDecode = jwtTokenHandler.ReadJwtToken(tokenDTO.AccessToken);
+            string userId = tokenDecode.Claims.First(claim => claim.Type == "nameid").Value;
 
-            if (objRefreshToken.UserId != userId)
-                return "the token doenst mateched the saved token";
+            if (objRefreshToken.UserId != int.Parse(userId))
+            {
+                return new VerifyTokenDTO
+                {
+                    Error = true,
+                    Message = "the token doenst mateched the saved token"
+                };
+            }
 
-            return null;
+            return new VerifyTokenDTO
+            {
+                UserId = int.Parse(userId)
+            };
         }
 
-        public async Task<string> VerifyToken(TokenDTO tokenDTO)
+        public async Task<VerifyTokenDTO> VerifyToken(TokenDTO tokenDTO)
         {
-            string response = ValidateAccessToken(tokenDTO.AccessToken);
-
-            if (response != null)
-                return response;
-
-            response = await ValidateRefreshToken(tokenDTO.RefreshToken);
-
-            return response;
+            try
+            {
+                return VerifyAccessToken(tokenDTO.AccessToken);
+            }
+            catch (SecurityTokenExpiredException)
+            {
+                return await VerifyRefreshToken(tokenDTO);
+            }
         }
     }
 }
